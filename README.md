@@ -32,3 +32,5 @@
 #### After testing and spider script is complete and verified in the shell, we can now scrape data from website
 #### scrapy crawl ufcspider
 #### Save results to a file
+
+## Update coming : Adding data directly to database using item and pipeline files
