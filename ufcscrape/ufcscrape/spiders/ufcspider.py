@@ -59,7 +59,7 @@ class UfcspiderSpider(scrapy.Spider):
 
                 counter+=1 # counter increment
 
-            print(fighter_data)
+            #print(fighter_data)
 
             #Adding time stamp for each update 
             current_time = datetime.now()
@@ -67,7 +67,7 @@ class UfcspiderSpider(scrapy.Spider):
             timestamp = current_time.strftime("%Y-%m-%d %H:%M:%S")
             
             # Writing output to text file spider_output.jsonl
-            with open("/Users/krishjoshi/Desktop/Projects/UFC_Scraping/ufcscrape/ufcscrape/spiders/spider_output.jsonl","a") as file:
+            with open("/Users/krishjoshi/Desktop/Projects/UFC_Scraping/ufcscrape/ufcscrape/spiders/ranking_data.jsonl","a") as file:
                 file.write(f"Timestamp of update: {timestamp} \n")
                 for item in fighter_data:
                     json_str = json.dumps(item,ensure_ascii=False)
@@ -75,4 +75,42 @@ class UfcspiderSpider(scrapy.Spider):
             file.close()
 
         elif operation==2:
-            pass
+            base_url = "https://www.ufc.com"
+            athelete_links = response.css("div.l-container__content a::attr(href)")
+
+            for athelete in athelete_links:
+                athelete_url = base_url + athelete.get()
+                yield scrapy.Request(athelete_url, callback=self.parse_athelete)
+    
+    def parse_athelete(self,response):
+        hero_div = response.css("div.hero-profile__info") # Gives the hero profile
+        
+        athelete_data = []
+        # Athelete basic details
+        athelete_name = hero_div.css("h1::text").get()
+        athelete_division = hero_div.css("p.hero-profile__division-title::text").get()
+        athelete_record = hero_div.css("p.hero-profile__division-body::text").get()
+
+        athelete_info = {"Athelete name:":athelete_name,"Athelete division:":athelete_division,"Athelete record:":athelete_record}
+
+        # Athelete career highlights
+        hero_highlights = hero_div.css("div.hero-profile__stat")  # div element which contains the career highlights
+
+        for i in hero_highlights:
+            stat = i.css("p.hero-profile__stat-numb::text").get()
+            stat_title = i.css("p.hero-profile__stat-text::text").get()
+            athelete_info[stat_title] = stat
+        
+        athelete_data.append(athelete_info)
+
+        # Adding time stamp for each update 
+        current_time = datetime.now()
+
+        timestamp = current_time.strftime("%Y-%m-%d %H:%M:%S")
+
+        # Writing output to text file spider_output.jsonl
+        with open("/Users/krishjoshi/Desktop/Projects/UFC_Scraping/ufcscrape/ufcscrape/spiders/athelete_data.jsonl","a") as file:
+            for item in athelete_data:
+                json_str = json.dumps(item,ensure_ascii=False)
+                file.write(json_str + "\n")
+        file.write(f"Timestamp of update: {timestamp} \n")
